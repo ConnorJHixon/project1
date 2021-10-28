@@ -19,14 +19,18 @@ tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
 
 ## Data Wrangling, Exploration, Visualization
 
-### Name and EID here
+### Connor Hixon, cjh4572
 
 #### Introduction 
 
-Paragraph or two introducing your datasets and variables, why they are interesting to you, etc.
+Going back to my freshman year, I have begun to track analytics for The University of Texas basketball team. These two data sets each include information regarding every offensive play Texas basketball had in 2020-21 season. I recorded all of the data by watching each offensive play and tracking specific variables such as assist, paint touch, shooter, play result, point result and much more in excel. 
 
 ```{R}
+library(tidyverse)
 # read your datasets in here, e.g., with read_csv()
+data1 <- read_csv('Dataset1.csv')
+data2 <- read_csv('Dataset2.csv')
+
 
 ```
 
@@ -36,6 +40,7 @@ If your datasets are tidy already, demonstrate that you can reshape data with pi
 
 ```{R}
 # your tidying code (if applicable; can also wait until wrangling section)
+#Waiting until the wrangling section to perform pivot wider/longer
 ```
 
     
@@ -43,41 +48,109 @@ If your datasets are tidy already, demonstrate that you can reshape data with pi
 
 ```{R}
 # your joining code
-
-# your joining code
+data <- full_join(data1, data2, by = c('GAME.#', 'PLAY.ID', 'POSS.#'))
 ```
 
-Discussions of joining here. Feel encouraged to break up into more than once code chunk and discuss each in turn.
+Data 1 contains information regarding whether the game was at home, who the opponent was, was the play a transition play, did the play happen in garbage time or clutch time, or what data did the game happen. Data 2 contains more of the specifics of what happen in the play such as who shot the ball, who was the assist man, and what was the final outcome of the play. I performed a full_join to join the data by what game in the season it was and what Possession number/Play ID the row was to make sure the data was in order of when the offensive plays happened. Possession number and Play ID are different because one possession could consist of multiple play IDs due to offensive rebounds or dead ball plays. 
 
 ####  Wrangling
 
 ```{R}
-# your wrangling code
+# Points by Shot Type
+points <- data %>%
+  select(SHOOTER, SHOT.TYPE, POINT.RESULT, PLAY.RESULT) %>%
+  filter(SHOOTER != 'N/A') %>%
+  group_by(SHOOTER, SHOT.TYPE) %>%
+  summarize(sum = sum(POINT.RESULT)) %>%
+  pivot_wider(names_from = 'SHOT.TYPE', values_from = 'sum') %>%
+  select(-'N/A')
+points[is.na(points)] <- 0
+points
 
-# your wrangling code
+count <- data %>%
+  select(SHOOTER, SHOT.TYPE, POINT.RESULT, PLAY.RESULT) %>%
+  filter(SHOOTER != "N/A") %>%
+  group_by(SHOOTER, SHOT.TYPE) %>%
+  summarize(count = n()) %>%
+  pivot_wider(names_from = 'SHOT.TYPE', values_from = 'count')
+count[is.na(count)] <- 0
+count
 
-# your wrangling code
+
+#PLAYS Summary Descriptive 
+data %>%
+  group_by(`GAME.#`) %>%
+  summarize(total_plays = n()) %>%
+  summarize(mean = mean(total_plays), sd = sd(total_plays), min = min(total_plays), max = max(total_plays), total = sum(total_plays))
+
+#POSSESSIONS Summary Descriptive 
+data %>% 
+  group_by(`GAME.#`) %>%
+  mutate(possessions = max(`POSS.#`), total_plays = n()) %>%
+  summarize(total_poss = mean(possessions), total_plays = mean(total_plays)) %>%
+  summarize(sum = sum(total_poss), min = min(total_poss), max = max(total_poss), median = median(total_poss), cor(total_poss, total_plays))
+
+
+
+data %>%
+  group_by(`GAME.#`) %>%
+  mutate(total = sum(POINT.RESULT)) %>%
+  summarize(Points_Per_Play = total/n()) %>%
+  summarize(PPP = mean(Points_Per_Play)) %>%
+  summarize(mean_PPP = mean(PPP), min_PPP = min(PPP), max_PPP = max(PPP), sd_PPP = sd(PPP), quantile(PPP, 0.75))
+
+points
+
+#NUMBER OF CLUTCH POSSESSIONS/ Categorical 
+data %>%
+  filter(`CLUTCH?` == 'TRUE') %>%
+  summarize(n_clutch_plays = n()) 
+
+#Count number of NA in each column
+data %>%
+  summarize_all(function(x)sum(str_detect(x, "N/A")))
+
+
+
+# six core dplyr
+at_rim<- data %>%
+  select(SHOOTER, SHOT.TYPE, POINT.RESULT) %>%
+  filter(SHOT.TYPE == 'Layup' | SHOT.TYPE == "Dunk")%>%
+  group_by(SHOOTER) %>%
+  mutate(sum_points = sum(POINT.RESULT)) %>%
+  summarize(count = n(), pp = sum_points/count) %>%
+  summarize (PPP = mean(pp)) %>%
+  arrange(desc(PPP))
+
+
 ```
 
-Your discussion of wrangling section here. Feel encouraged to break up into more than once code chunk and discuss each in turn.
+When looking at the total plays this season, Texas basketball had 2374 total plays ran this season. We averaged 87.9 plays per game with a standard deviation of 8.84. The least plays we ran in a game was 75 and the most plays we ran in a game was 121. 
 
 
 #### Visualizing
 
 ```{R}
-# your plot 1
+at_rim %>%
+ggplot( aes(x= SHOOTER, y= PPP)) + geom_point(aes(color = SHOOTER), size = 4) + geom_smooth(method = 'lm') + xlab('Shooter') + ylab('Points Per Possessions')  + geom_hline(yintercept = 1.60, color = '#BF5700') + theme_minimal()+ theme(axis.text.x = element_blank()) + labs(title = "FINISHING AT THE RIM", subtitle = 'Layups and Dunks included', color = 'Player') 
 ```
 
-Your discussion of plot 1
+One of the goals of Texas basketball was finishing above 80% at the rim (also 1.60 PPP). I only looked at when the shot attempt was a layup or a dunk since these are when the player is at the rim.  Only two players, Jase Febres and Blake Nevins, accomplished this goal while Jericho Sims was very close. Players such as Gerald Liddell and Donovan Williams have areas of growth when looking to finish at the rim. 
 
 ```{R}
-# your plot 2
+data %>%
+  group_by(CAUSE.OF.PAINT)%>%
+  summarize(count = n()) %>%
+  na.omit() %>%
+  ggplot(aes(x = CAUSE.OF.PAINT, fill = CAUSE.OF.PAINT)) + geom_bar(aes(y = count), stat = 'summary') + theme_dark()+ theme(axis.text.x = element_blank()) + scale_fill_brewer() + labs(title = "Count of Different Paint Touches", x = 'Type of Paint Touch', y = 'Number of Occurences', fill = 'Type of Paint Touch') + scale_y_continuous(breaks = seq(0, 1000, 100))
 ```
 
-Your discussion of plot 2
+The graph displays all of the different paint touches the team at in a play for the entire season. The N/A column represents that the team had around 1000 plays where there was no paint touch recorded on the play. When the team had a paint touch the highest type was perimeter drives with around 550 attempts on the year. Post-ups on the block were the lowest frequency with only around 25 attempts. This graph is a good illustration of how Texas basketball team is getting into the paint. 
 
 ```{R}
-# your plot 3
+data %>%
+  select(`GAME.#`, PASSES) %>%
+  ggplot(aes(x = `GAME.#`, y = PASSES)) + geom_density2d_filled()+ geom_point(size = .01) + geom_jitter(size = 0.1) + scale_y_continuous(breaks = seq(1, 12, 1)) + theme_dark() + labs(title = 'Number of Passes by Game', x = "Game Number", y = "Number of Passes")
 ```
 
 Your discussion of plot 3
