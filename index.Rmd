@@ -23,14 +23,14 @@ tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
 
 #### Introduction 
 
-Going back to my freshman year, I have begun to track analytics for The University of Texas basketball team. These two data sets each include information regarding every offensive play Texas basketball had in 2020-21 season. I recorded all of the data by watching each offensive play and tracking specific variables. For each play I recorded:  Game #, Date, Opponent, Type of Game, Home/Away, Transition, Garbage Time Clutch Time, Possessions, Play ID, Number of Passes and more in dataset 1. For dataset 2 I recorded:  Assist Opportunity, Shooter, Hockey Assist, Paint Touch, Cause of Paint Touch, Play Result and Point Result for each play in the 2020-21 season. 
+Going back to my freshman year, I have begun to track analytics for The University of Texas basketball team. These two data sets each include information regarding every offensive play Texas basketball had in 2020-21 season. I recorded all of the data by watching each offensive play and tracking specific variables. For each play I recorded:  Game #, Date, Opponent, Type of Game, Home/Away, Transition, Garbage Time Clutch Time, Possessions, Play ID, Number of Passes and more in dataset 1. For dataset 2 I recorded:  Assist Opportunity, Shooter, Hockey Assist, Paint Touch, Cause of Paint Touch, Play Result and Point Result for each play in the 2020-21 season. The goal was to help UT basketball gain more knowledge into the numbers behind the game.
 
 ```{R}
 library(tidyverse)
 library(gt)
 # read your datasets in here, e.g., with read_csv()
-data1 <- read_csv('Dataset1.csv')
-data2 <- read_csv('Dataset2.csv')
+data1 <- read_csv('/stor/home/cjh4572/DATA/Dataset1.csv')
+data2 <- read_csv('/stor/home/cjh4572/DATA/Dataset2.csv')
 
 
 ```
@@ -44,7 +44,7 @@ If your datasets are tidy already, demonstrate that you can reshape data with pi
 #Waiting until the wrangling section to perform pivot wider/longer
 ```
 
-In the Wrangling section I used pivot_wider to find the total number of points scored by each player based on the shot type the player took throughout the season. 
+In the Wrangling section I used pivot_wider to find the total number of points scored by each player based on the shot type the player took throughout the season. The shot type column I expanded so that each row became a column heading and I could see how many points each player scored according to the shot type. 
     
 #### Joining/Merging
 
@@ -53,14 +53,14 @@ In the Wrangling section I used pivot_wider to find the total number of points s
 data <- full_join(data1, data2, by = c('GAME.#', 'PLAY.ID', 'POSS.#'))
 ```
 
-Data 1 contains information regarding whether the game was at home, who the opponent was, was the play a transition play, did the play happen in garbage time or clutch time, or what date did the game happen. Data 2 contains more of the specifics of what happen in the play such as who shot the ball, who was the assist man, and what was the final outcome of the play. I performed a full_join to join the data by what game # in the season it was and what Possession number/Play ID the row was to make sure the data was in order of when the offensive plays happened. I performed a full join by these two variables because each datasets provides information about one offensive possession. Possession number and Play ID are different because one possession could consist of multiple play IDs due to offensive rebounds or dead ball plays. 
+Data 1 contains information regarding whether the game was at home, who the opponent was, was the play a transition play, did the play happen in garbage time or clutch time, or what date did the game happen. Data 2 contains more of the specifics of what happen in the play such as who shot the ball, who was the assist man, and what was the final outcome of the play. I performed a full_join to join the data by what game # in the season it was and what Possession number/Play ID the row was to make sure the data was in order of when the offensive plays happened. I performed a full join by these three variables because each dataset provides information about one offensive possession. Possession number and Play ID are different because one possession could consist of multiple play IDs due to offensive rebounds or dead ball plays. 
 
 In the data (joined datasets together) table, it contains 28 variables and 2374 observations. From data 1 there it contains 16 unique variables that were not found in data 2. These variables were:  season, Date, Opponent, Conference/Non-Conference, Home/away, W/L, Half, Clutch?, Transition?, Garbage?, 2nd.Chance, Man or Zone, Assist Opportunity, Passes, Hockey Assist, Shooter.  For data 2, there were 9 unique variables not found in data 1 and they were:  Shot Clock Third, Shot Type, Contested, Paint Touch, Cause of Paint Touch, Paint Attacker, Defender Attacker, Play Result, Point Result. 
 
 ####  Wrangling
 
 ```{R}
-# Points by Shot Type
+# Points by Shot Type using pivot_wider
 points <- data %>%
   select(SHOOTER, SHOT.TYPE, POINT.RESULT, PLAY.RESULT) %>%
   filter(SHOOTER != 'N/A') %>%
@@ -96,6 +96,7 @@ at_rim<- data %>%
   summarize(count = n(), pp = sum_points/count) %>%
   summarize (PPP = mean(pp)) %>%
   arrange(desc(PPP))
+at_rim
 
 ```
 
@@ -139,28 +140,28 @@ data %>%
 
 ```
 
-When looking at the total plays this season, Texas basketball had 2374 total plays ran this season. We averaged 87.9 plays per game with a standard deviation of 8.84. The least plays we ran in a game was 75 and the most plays we ran in a game was 121. For points per play, Texas averaged 0.854 points per play (PPP) last season. There best game, Texas had a 1.01 PPP and in their worst game they had a 0.55 PPP which is a pretty significant gap. Also, one interesting findings I found when counting up the categorical variables that Texas had 1,375 plays in the season with a paint touch and 999 plays in the season without a paint touch. This shows that in over 50% of Texas plays they were able to achieve a paint touch.
+When looking at the total plays this season, Texas basketball had 2374 total plays ran this season. We averaged 87.9 plays per game with a standard deviation of 8.84. The least plays we ran in a game was 75 and the most plays we ran in a game was 121. For points per play, Texas averaged 0.854 points per play (PPP) last season. Their best game, Texas had a 1.01 PPP and in their worst game they had a 0.55 PPP which is a pretty significant gap. Also, one interesting finding I found when counting up the categorical variables that Texas had 1,375 plays in the season with a paint touch and 999 plays in the season without a paint touch. This shows that in over 50% of Texas plays they were able to achieve a paint touch.
 
-When looking at the total points per shot table, we can see which players produced the most points by what shot type it was. Andrew Jones found a lot of success last season off of Catch & Shoot shots producing 107 points, team high. Players such as Jericho Sims and Kai Jones found lot of their success in the point as Sims had 133 points on Dunks and Jones had 111 points. When looking at the counts of shot type for each player you are able to find more context about the total points. For an example, Andrew Jones has 60 points on off-the-dribble (3) while Courntey Ramey has 48. However, Jones has had 13 more attempts than Ramey making his efficiency lower. `
+When looking at the total points per shot table, we can see which players produced the most points by what shot type it was. Andrew Jones found a lot of success last season off of Catch & Shoot shots producing 107 points, team high. Players such as Jericho Sims and Kai Jones found lot of their success in the point as Sims had 133 points on Dunks and Jones had 111 points. When looking at the counts of shot type for each player you are able to find more context about the total points. For an example, Andrew Jones has 60 points on off-the-dribble (3) while Courtney Ramey has 48. However, Jones has had 13 more attempts than Ramey making his efficiency lower.
 
 
 #### Visualizing
 
 ```{R}
 at_rim %>%
-ggplot( aes(x= SHOOTER, y= PPP)) + geom_point(aes(color = SHOOTER), size = 4) + geom_smooth(method = 'lm') + xlab('Shooter') + ylab('Points Per Possessions')  + geom_hline(yintercept = 1.60, color = '#BF5700') + theme_minimal()+ theme(axis.text.x = element_blank()) + labs(title = "FINISHING AT THE RIM", subtitle = 'Layups and Dunks included', color = 'Player') + scale_y_continuous(breaks = seq(0.80, 2.00, .10))
+ggplot( aes(x= SHOOTER, y= PPP)) + geom_point(aes(color = SHOOTER), size = 4) + xlab('Shooter') + ylab('Points Per Possessions')  + geom_hline(yintercept = 1.60, color = '#BF5700') + theme_minimal()+ theme(axis.text.x = element_blank()) + labs(title = "FINISHING AT THE RIM", subtitle = 'Layups and Dunks', color = 'Player') + scale_y_continuous(breaks = seq(0.80, 2.00, .10))
 ```
 
-One of the goals of Texas basketball was finishing above 80% at the rim (also 1.60 PPP). I only looked at when the shot attempt was a layup or a dunk since these are when the player is at the rim.  Only two players, Jase Febres and Blake Nevins, accomplished this goal while Jericho Sims was very close. Players such as Gerald Liddell and Donovan Williams have areas of growth when looking to finish at the rim. Most of the players were in between 1.00 to 1.5 PPP, it will be interesting to see how the team improves to this upcoming season. 
+One of the goals of Texas basketball was finishing above 80% at the rim (also 1.60 PPP). I only looked at when the shot attempt was a layup or a dunk since these are when the player is at the rim.  Only two players, Jase Febres and Blake Nevins, accomplished this goal while Jericho Sims was very close. Players such as Gerald Liddell and Donovan Williams have areas of growth when looking to finish at the rim. Most of the players were in between 1.00 to 1.5 PPP, it will be interesting to see how the team improves this upcoming season. 
 
 ```{R}
 data %>%
   select(CAUSE.OF.PAINT, POINT.RESULT)%>%
   na.omit()%>%
-  ggplot(aes(x = CAUSE.OF.PAINT, y= POINT.RESULT, fill = CAUSE.OF.PAINT)) + geom_bar(stat = 'summary') + geom_errorbar(stat = "summary", fun.data = mean_se, width = 0.25) + theme_dark()+ theme(axis.text.x = element_blank()) + scale_fill_brewer() + labs(title = " Points Per Paint Touch", subtitle = 'Average Points Based on Type of Paint Touch',  x = 'Type of Paint Touch', y = 'Number of Occurences', fill = 'Type of Paint Touch') + scale_y_continuous(breaks = seq(0, 1.75, 0.25))
+  ggplot(aes(x = CAUSE.OF.PAINT, y= POINT.RESULT, fill = CAUSE.OF.PAINT)) + geom_bar(stat = 'summary') + geom_errorbar(stat = "summary", fun.data = mean_se, width = 0.25) + theme_dark()+ theme(axis.text.x = element_blank()) + scale_fill_brewer() + labs(title = " Points Per Paint Touch", subtitle = 'Average Points Based on Type of Paint Touch',  x = 'Type of Paint Touch', y = 'Average Points Per Paint Touhch', fill = 'Type of Paint Touch') + scale_y_continuous(breaks = seq(0, 1.75, 0.25))
 ```
 
-The graph displays the average amount of points scored based on the type of paint touch that occurred on the possessions. P&R man produced the the most points with around 1.35 points paint touch. Perimeter drives had the least amount of points produced with around a 0.60 points per paint touch which was similar to the amount of points produced on possessions that there were no paint touches (this is the N/A column). This graph shows that Texas produced more points on plays with a paint touch compared to plays where there was no paint touch. Also the error bar is very large on Post-up (on the block) possessions meaning that the points per paint touch has lots of variability and needs to be viewed with caution. 
+The graph displays the average amount of points scored based on the type of paint touch that occurred on the possessions. P&R man produced the most points with around 1.35 points per paint touch. Perimeter drives had the least amount of points produced with around a 0.60 points per paint touch which was similar to the amount of points produced on possessions that there were no paint touches (this is the N/A column). This graph shows that Texas produced more points on plays with a paint touch compared to plays where there was no paint touch. Also the error bar is very large on Post-up (on the block) possessions meaning that the points per paint touch has lots of variability and needs to be viewed with caution. 
 
 ```{R}
 data %>%
@@ -168,9 +169,9 @@ data %>%
   ggplot(aes(x = `GAME.#`, y = PASSES)) + geom_density2d_filled()+ geom_point(size = .01) + geom_jitter(size = 0.1) + scale_y_continuous(breaks = seq(1, 12, 1)) + theme_dark() + labs(title = 'Passing By Game', x = "Game Number", y = "Number of Passes", subtitle = 'Number of passes per. play in each game')
 ```
 
-The last graph shows number of passes for each possessions in each game. You can see that there was a high density on possessions with only 1 pass. Most possessions in the year fell between 0 and 4 passes total on the play. There was a very low density of possessions with more than 5 passes. 
+The last graph shows number of passes for each possessions in each game. You can see that there was a high density on possessions with only 1 pass. Most possessions in the year fell between 0 and 4 passes total on the play. There was a very low density of possessions with more than 5 passes and you can see from the points that the most passes on one play was 12. Also towards the end of the season, Texas began to have more passes on their plays with 5 and 6 passes.
 
 #### Concluding Remarks
 
-In basketball there is so much analytics that makes up the game. However, when looking at specific such as shot type by players, points per play, or number of passes this allows for the team to get a better understanding of why they succeed or failed. In the project, I was able to identify some of the analytics that made up Texas Basketball season last year that can be helpful when going into the new 2021-22 basketball season. 
+In basketball there is so much analytics that makes up the game. However, when looking at specifics such as shot type by players, points per play, or number of passes this allows for the team to get a better understanding of why they succeed or failed. In the project, I was able to identify some of the analytics that made up Texas Basketball season last year that can be helpful when going into the new 2021-22 basketball season. 
 
