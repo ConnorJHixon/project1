@@ -32,7 +32,6 @@ library(gt)
 data1 <- read_csv('/stor/home/cjh4572/DATA/Dataset1.csv')
 data2 <- read_csv('/stor/home/cjh4572/DATA/Dataset2.csv')
 
-
 ```
 
 #### Tidying: Reshaping
