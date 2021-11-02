@@ -174,3 +174,5 @@ The last graph shows number of passes for each possessions in each game. You can
 
 In basketball there is so much analytics that makes up the game. However, when looking at specifics such as shot type by players, points per play, or number of passes this allows for the team to get a better understanding of why they succeed or failed. In the project, I was able to identify some of the analytics that made up Texas Basketball season last year that can be helpful when going into the new 2021-22 basketball season. 
 
+
+<div class = "tocify-extend-page" data - unique= "tocify-extend-page" style = "height: 0:"></div>
